@@ -10,5 +10,5 @@ All notable changes to this project. Versions follow [Semantic Versioning](https
   * Also works on a regular key (press only)
 * Live 176×112 knob panel: volume %, volume bar, speaker/mic icons, status line (`SPEAKER · MIC ON` / `MIC MUTED` / `SPEAKER MUTED` / `ALL MUTED`), red background when all muted; re-syncs with macOS every second
 * Knob ring light over USB HID: green (on), amber (mic muted), red (speaker muted); shared (non-exclusive) device access so Stream Dock stays connected; writes delayed 800 ms to avoid colliding with image transfers
-* `install.sh` installer, unit tests (`node --test`)
+* `install.sh` installer, unit tests (`node --test`) ([a6195cf](https://github.com/OneAtDrt/stream_deck_audio_control/commit/a6195cf2f52c1e056b22504851a421bf5405c5d6))
 * Files: `com.oneatdrt.audio.sdPlugin/manifest.json`, `plugin/index.js`, `plugin/audio.js`, `plugin/render.js`, `plugin/knob-led.js`, `plugin/audio.test.js`, `static/icon.svg`, `install.sh`, `README.md`
