@@ -72,11 +72,26 @@ function writeColors(colors) {
   }
 }
 
-// Paints `knobIndex` with `rgb` and every other ring with the colour set in the Stream Dock app.
-function setKnobColor(knobIndex, rgb) {
+// One packet sets all four rings, so every action's ring colour lives here: knobs we own show
+// our colour, the rest show the colour chosen in the Stream Dock app.
+const owned = new Map();
+
+function writeAll() {
   const colors = readRingColors();
-  if (knobIndex >= 0 && knobIndex < KNOB_COUNT) colors[knobIndex] = rgb;
+  for (const [index, rgb] of owned) colors[index] = rgb;
   writeColors(colors);
 }
 
-module.exports = { setKnobColor, readRingColors, parseRingColors, buildPacket, hexToRgb };
+function setKnobColor(knobIndex, rgb) {
+  if (knobIndex < 0 || knobIndex >= KNOB_COUNT) return;
+  owned.set(knobIndex, rgb);
+  writeAll();
+}
+
+// Hands a ring back to the Stream Dock app's colour (e.g. when the action leaves the page).
+function releaseKnob(knobIndex) {
+  if (!owned.delete(knobIndex)) return;
+  writeAll();
+}
+
+module.exports = { setKnobColor, releaseKnob, readRingColors, parseRingColors, buildPacket, hexToRgb };

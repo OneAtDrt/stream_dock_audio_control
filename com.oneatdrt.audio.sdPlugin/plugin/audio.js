@@ -70,12 +70,17 @@ function nextVolume(current, ticks) {
   return Math.max(0, Math.min(100, current + ticks * VOLUME_STEP));
 }
 
-// Turning the knob changes speaker volume and unmutes the speaker (the mic is left alone).
+// Like the keyboard volume keys: reaching 0 mutes the output (level 0 alone can still leak
+// sound on some devices), anything above 0 unmutes it. The mic is left alone.
+function volumeCommands(volume) {
+  return [`set volume output volume ${volume}`, volume === 0 ? 'set volume with output muted' : 'set volume without output muted'];
+}
+
 async function changeVolume(ticks) {
   const state = await readState();
   const volume = nextVolume(state.volume, ticks);
-  await osascript([`set volume output volume ${volume}`, 'set volume without output muted']);
-  return { ...state, volume, speakerMuted: false };
+  await osascript(volumeCommands(volume));
+  return { ...state, volume, speakerMuted: volume === 0 };
 }
 
-module.exports = { readState, toggleMuteAll, changeVolume, parseVolumeSettings, nextVolume };
+module.exports = { readState, toggleMuteAll, changeVolume, parseVolumeSettings, nextVolume, volumeCommands };

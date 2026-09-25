@@ -4,13 +4,43 @@
       "Icon": "static/icon.svg",
       "Name": "Volume + Mic Mute",
       "DisableAutomaticStates": true,
-      "States": [{ "Image": "static/icon.svg", "TitleAlignment": "bottom", "FontSize": "10" }],
+      "States": [
+        {
+          "Image": "static/icon.svg",
+          "TitleAlignment": "bottom",
+          "FontSize": "10"
+        }
+      ],
       "Settings": {},
-      "Controllers": ["Knob", "Keypad"],
+      "Controllers": [
+        "Knob",
+        "Keypad"
+      ],
       "UserTitleEnabled": false,
       "SupportedInMultiActions": false,
       "Tooltip": "Turn: output volume. Press: mute/unmute speaker AND microphone together.",
       "UUID": "com.oneatdrt.audio.volmic"
+    },
+    {
+      "Icon": "static/nowplaying.svg",
+      "Name": "Now Playing",
+      "DisableAutomaticStates": true,
+      "States": [
+        {
+          "Image": "static/nowplaying.svg",
+          "TitleAlignment": "bottom",
+          "FontSize": "10"
+        }
+      ],
+      "Settings": {},
+      "Controllers": [
+        "Knob",
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "SupportedInMultiActions": false,
+      "Tooltip": "Shows the playing app and track. Press: play/pause. Turn left/right: previous/next track.",
+      "UUID": "com.oneatdrt.audio.nowplaying"
     }
   ],
   "SDKVersion": 1,
@@ -18,12 +48,21 @@
   "Name": "Audio Control",
   "Icon": "static/icon.svg",
   "CodePathMac": "plugin/index.js",
-  "Description": "Knob for system volume; press mutes speaker and microphone together, with live status on the strip.",
+  "Description": "Knobs for system volume + speaker/mic mute, and now-playing media control, with live status on the strip.",
   "Category": "Audio Control",
   "CategoryIcon": "static/icon.svg",
-  "Version": "0.1.0",
+  "Version": "0.2.0",
   "URL": "https://github.com/MiraboxSpace/StreamDock-Plugin-SDK",
-  "OS": [{ "Platform": "mac", "MinimumVersion": "10.11" }],
-  "Software": { "MinimumVersion": "3.10.191.0421" },
-  "Nodejs": { "Version": "20" }
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "10.11"
+    }
+  ],
+  "Software": {
+    "MinimumVersion": "3.10.191.0421"
+  },
+  "Nodejs": {
+    "Version": "20"
+  }
 }

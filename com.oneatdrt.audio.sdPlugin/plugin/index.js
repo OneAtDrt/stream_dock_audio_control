@@ -4,8 +4,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const WebSocket = require('ws');
 const { readState, toggleMuteAll, changeVolume } = require('./audio');
-const { renderAudio, renderError } = require('./render');
-const { setKnobColor, readRingColors } = require('./knob-led');
+const { renderAudio, renderError, renderNowPlaying } = require('./render');
+const { startStream, sendCommand } = require('./nowplaying');
+const { dim } = require('./color');
+const { setKnobColor, releaseKnob } = require('./knob-led');
 
 // Picks up volume/mute changes made elsewhere (keyboard keys, menu bar, other apps).
 const POLL_MS = 1000;
@@ -16,6 +18,13 @@ const RING_REASSERT_MS = 60000;
 const RING_MUTED = [255, 0, 0];
 const RING_MIC_ONLY = [255, 140, 0];
 const RING_ON = [0x19, 0xfa, 0x1f];
+// Now Playing ring: the source's colour, dimmed while paused.
+const NP_PAUSED_DIM = 0.2;
+const NOW_PLAYING_ACTION = 'com.oneatdrt.audio.nowplaying';
+// One track skip per knob gesture, however many ticks a fast spin produces.
+const SKIP_THROTTLE_MS = 350;
+// Track changes arrive as a burst (empty -> other app -> partial -> final); draw only the settled state.
+const NP_SETTLE_MS = 400;
 const LOG_FILE = path.join(__dirname, 'log', 'plugin.log');
 
 const startup = parseStartupArgs(process.argv);
@@ -29,10 +38,22 @@ let queue = Promise.resolve();
 let pendingTicks = 0;
 let ringTimer = null;
 
+// Now Playing action: context -> { square, knobIndex, lastImage, lastRing, ringAt }
+const npContexts = new Map();
+let nowPlaying = { track: null };
+let lastSkipAt = 0;
+let npTimer = null;
+let npRingTimer = null;
+
 ws.on('open', () => {
   log('connected');
   send({ uuid: startup.pluginUuid, event: startup.registerEvent });
   setInterval(() => enqueue(async () => setState(await readState())), POLL_MS);
+  startStream((next) => {
+    nowPlaying = next;
+    clearTimeout(npTimer);
+    npTimer = setTimeout(paintNowPlaying, NP_SETTLE_MS);
+  }, log);
 });
 
 ws.on('close', () => process.exit(0));
@@ -46,6 +67,11 @@ ws.on('message', (raw) => {
   }
   const { event, context, payload = {} } = message;
 
+  if (npContexts.has(context) || (event === 'willAppear' && message.action === NOW_PLAYING_ACTION)) {
+    handleNowPlaying(event, context, payload);
+    return;
+  }
+
   if (event === 'willAppear') {
     const square = payload.controller === 'Keypad';
     const knobIndex = square ? -1 : Number(payload.coordinates?.column ?? -1);
@@ -56,7 +82,7 @@ ws.on('message', (raw) => {
     const item = contexts.get(context);
     contexts.delete(context);
     // Leaving the page: hand the ring back to the colour chosen in the Stream Dock app.
-    if (item && item.knobIndex >= 0) setTimeout(() => paintRing(item.knobIndex, readRingColors()[item.knobIndex]), RING_DELAY_MS);
+    if (item && item.knobIndex >= 0) setTimeout(() => ringCall(() => releaseKnob(item.knobIndex)), RING_DELAY_MS);
   } else if (event === 'dialRotate') {
     // Coalesce fast spins into one volume change per osascript round-trip.
     pendingTicks += Number(payload.ticks) || 0;
@@ -69,6 +95,68 @@ ws.on('message', (raw) => {
     enqueue(async () => setState(await toggleMuteAll()));
   }
 });
+
+function handleNowPlaying(event, context, payload) {
+  if (event === 'willAppear') {
+    const square = payload.controller === 'Keypad';
+    const knobIndex = square ? -1 : Number(payload.coordinates?.column ?? -1);
+    npContexts.set(context, { square, knobIndex, lastImage: null, lastRing: null, ringAt: 0 });
+    paintNowPlaying();
+  } else if (event === 'willDisappear') {
+    const item = npContexts.get(context);
+    npContexts.delete(context);
+    if (item && item.knobIndex >= 0) setTimeout(() => ringCall(() => releaseKnob(item.knobIndex)), RING_DELAY_MS);
+  } else if (event === 'dialRotate') {
+    const ticks = Number(payload.ticks) || 0;
+    const now = Date.now();
+    if (!ticks || now - lastSkipAt < SKIP_THROTTLE_MS) return;
+    lastSkipAt = now;
+    mediaCommand(ticks > 0 ? 'next-track' : 'previous-track');
+  } else if (event === 'dialDown' || event === 'keyUp') {
+    // Flip the icon right away; the stream confirms (or corrects) it a moment later.
+    if (nowPlaying.track) {
+      nowPlaying = { ...nowPlaying, track: { ...nowPlaying.track, playing: !nowPlaying.track.playing } };
+      paintNowPlaying();
+    }
+    mediaCommand('toggle-play-pause');
+  }
+}
+
+function mediaCommand(command) {
+  sendCommand(command).catch((err) => log(`media-control ${command} failed: ${err.message}`));
+}
+
+function paintNowPlaying() {
+  for (const [context, item] of npContexts) {
+    const image = renderNowPlaying(nowPlaying, { square: item.square });
+    if (image === item.lastImage) continue;
+    item.lastImage = image;
+    send({ event: 'setImage', context, payload: { target: 0, image } });
+  }
+  clearTimeout(npRingTimer);
+  npRingTimer = setTimeout(paintNowPlayingRings, RING_DELAY_MS);
+}
+
+function nowPlayingRing() {
+  const { track, color } = nowPlaying;
+  if (!track || !color) return null;
+  return track.playing ? color : dim(color, NP_PAUSED_DIM);
+}
+
+function paintNowPlayingRings() {
+  const now = Date.now();
+  const rgb = nowPlayingRing();
+  for (const item of npContexts.values()) {
+    if (item.knobIndex < 0) continue;
+    const key = rgb ? rgb.join(',') : 'released';
+    if (key === item.lastRing && now - item.ringAt < RING_REASSERT_MS) continue;
+    const ok = rgb ? paintRing(item.knobIndex, rgb) : ringCall(() => releaseKnob(item.knobIndex));
+    if (ok) {
+      item.lastRing = key;
+      item.ringAt = now;
+    }
+  }
+}
 
 function enqueue(task) {
   queue = queue.then(task).then(
@@ -95,6 +183,7 @@ function ringColorFor() {
 }
 
 function paintRings() {
+  paintNowPlayingRings();
   const now = Date.now();
   for (const item of contexts.values()) {
     if (item.knobIndex < 0 || !state) continue;
@@ -110,8 +199,12 @@ function paintRings() {
 
 let ringErrorLogged = false;
 function paintRing(knobIndex, rgb) {
+  return ringCall(() => setKnobColor(knobIndex, rgb));
+}
+
+function ringCall(fn) {
   try {
-    setKnobColor(knobIndex, rgb);
+    fn();
     ringErrorLogged = false;
     return true;
   } catch (err) {
