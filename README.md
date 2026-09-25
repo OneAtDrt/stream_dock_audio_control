@@ -80,8 +80,8 @@ The knob's **ring light takes the colour of the source**: full colour while play
 ## Install
 
 ```sh
-git clone https://github.com/OneAtDrt/stream_deck_audio_control.git
-cd stream_deck_audio_control
+git clone https://github.com/OneAtDrt/stream_dock_audio_control.git
+cd stream_dock_audio_control
 ./install.sh
 ```
 
