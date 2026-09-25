@@ -5,12 +5,12 @@ All notable changes to this project. Versions follow [Semantic Versioning](https
 ## [v0.2.1](https://github.com/OneAtDrt/stream_deck_audio_control/releases/tag/v0.2.1) — README previews, shared knob rings
 
 ### Added
-* README: preview images of every state, drawn by the plugin's real `render.js` (`scripts/previews.js`, needs Google Chrome)
+* README: preview images of every state, drawn by the plugin's real `render.js` (`scripts/previews.js`, needs Google Chrome) ([6ceee06](https://github.com/OneAtDrt/stream_deck_audio_control/commit/6ceee06477cbb93493cc005cd8f4e754c6070b1e))
 
 ### Fixed
-* Knob rings are shared with other Stream Dock plugins through a small state file (`knob-led.js`): another plugin's ring write (e.g. the Network plugin) no longer resets the Volume / Now Playing rings for up to 60 s, and vice versa
-* Files: `plugin/knob-led.js`, `plugin/knob-led.test.js` (new), `scripts/previews.js` (new), `docs/previews/*.png` (new), `README.md`; version 0.2.1 in `manifest.json`, `package.json`, `package-lock.json`
-* Tests: 36
+* Knob rings are shared with other Stream Dock plugins through a small state file (`knob-led.js`): another plugin's ring write (e.g. the Network plugin) no longer resets the Volume / Now Playing rings for up to 60 s, and vice versa ([6ceee06](https://github.com/OneAtDrt/stream_deck_audio_control/commit/6ceee06477cbb93493cc005cd8f4e754c6070b1e))
+* Files: `plugin/knob-led.js`, `plugin/knob-led.test.js` (new), `scripts/previews.js` (new), `docs/previews/*.png` (new), `README.md`; version 0.2.1 in `manifest.json`, `package.json`, `package-lock.json` ([6ceee06](https://github.com/OneAtDrt/stream_deck_audio_control/commit/6ceee06477cbb93493cc005cd8f4e754c6070b1e))
+* Tests: 36 ([6ceee06](https://github.com/OneAtDrt/stream_deck_audio_control/commit/6ceee06477cbb93493cc005cd8f4e754c6070b1e))
 
 ## [v0.2.0](https://github.com/OneAtDrt/stream_deck_audio_control/releases/tag/v0.2.0) — Now Playing knob
 
