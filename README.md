@@ -4,6 +4,20 @@
 
 A [Mirabox Stream Dock](https://mirabox.net) plugin for macOS with two knob actions for the **N4 Pro**. The panel above each knob always shows the current state.
 
+## What you'll see
+
+<img src="docs/previews/gallery.png" width="600" alt="Volume + Mic Mute and Now Playing knob panels">
+
+Knob panels (176×112), top row **Volume + Mic Mute**, second row **Now Playing**, then the same actions on a 144×144 key:
+
+<table>
+<tr><td align="center"><img src="docs/previews/volume-on.png" width="176" alt="Speaker and mic on"><br><sub>Speaker and mic on</sub></td><td align="center"><img src="docs/previews/volume-mic-muted.png" width="176" alt="Mic muted"><br><sub>Mic muted</sub></td><td align="center"><img src="docs/previews/volume-all-muted.png" width="176" alt="All muted (press)"><br><sub>All muted (press)</sub></td><td align="center"><img src="docs/previews/volume-100.png" width="176" alt="100%"><br><sub>100%</sub></td></tr>
+<tr><td align="center"><img src="docs/previews/nowplaying-app.png" width="176" alt="App, with cover art and app badge"><br><sub>App, with cover art and app badge</sub></td><td align="center"><img src="docs/previews/nowplaying-browser.png" width="176" alt="Browser: shows the site (YouTube)"><br><sub>Browser: shows the site (YouTube)</sub></td><td align="center"><img src="docs/previews/nowplaying-paused.png" width="176" alt="Paused"><br><sub>Paused</sub></td><td align="center"><img src="docs/previews/nowplaying-nothing.png" width="176" alt="Nothing playing"><br><sub>Nothing playing</sub></td></tr>
+<tr><td align="center"><img src="docs/previews/key-volume.png" width="144" alt="Volume on a normal key"><br><sub>Volume on a normal key</sub></td><td align="center"><img src="docs/previews/key-nowplaying.png" width="144" alt="Now Playing on a normal key"><br><sub>Now Playing on a normal key</sub></td></tr>
+</table>
+
+## Knob actions
+
 ### Volume + Mic Mute
 
 | Input | Effect |
@@ -118,6 +132,8 @@ cd com.oneatdrt.audio.sdPlugin/plugin
 npm install
 npm test
 ```
+
+Regenerate the README preview images (`docs/previews/`) with `node scripts/previews.js` (needs Google Chrome). It draws every state with the real `plugin/render.js` and made-up sample tracks.
 
 The plugin writes its log to `plugin/log/plugin.log` inside the installed plugin folder.
 

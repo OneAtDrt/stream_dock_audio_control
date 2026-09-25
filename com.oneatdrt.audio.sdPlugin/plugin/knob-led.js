@@ -72,13 +72,53 @@ function writeColors(colors) {
   }
 }
 
-// One packet sets all four rings, so every action's ring colour lives here: knobs we own show
-// our colour, the rest show the colour chosen in the Stream Dock app.
+// One packet sets all four rings, so each packet must carry every plugin's current colour. Rings we
+// own live in `owned`; other Stream Dock plugins (e.g. Audio and Network) publish theirs in a shared
+// file, so a write here doesn't reset their knobs. Entries of plugins that are no longer running
+// are ignored. Knobs nobody owns show the colour chosen in the Stream Dock app.
+const SHARED_FILE = process.env.ONEATDRT_RINGS_FILE || path.join(os.tmpdir(), 'oneatdrt-knob-rings.json');
 const owned = new Map();
 
+function isAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return err.code === 'EPERM';
+  }
+}
+
+function readShared() {
+  try {
+    return JSON.parse(fs.readFileSync(SHARED_FILE, 'utf8')) || {};
+  } catch {
+    return {};
+  }
+}
+
+// Other live plugins' rings + ours, and our entries published back to the shared file.
+function mergeShared(shared, pid = process.pid, alive = isAlive) {
+  const merged = {};
+  for (const [index, entry] of Object.entries(shared)) {
+    if (entry && entry.pid !== pid && Array.isArray(entry.rgb) && alive(entry.pid)) merged[index] = entry;
+  }
+  for (const [index, rgb] of owned) merged[index] = { pid, rgb };
+  return merged;
+}
+
 function writeAll() {
+  const merged = mergeShared(readShared());
+  try {
+    const tmp = `${SHARED_FILE}.${process.pid}`;
+    fs.writeFileSync(tmp, JSON.stringify(merged));
+    fs.renameSync(tmp, SHARED_FILE);
+  } catch {
+    // Sharing is best effort; the device write below still happens.
+  }
   const colors = readRingColors();
-  for (const [index, rgb] of owned) colors[index] = rgb;
+  for (const [index, entry] of Object.entries(merged)) {
+    if (Number(index) >= 0 && Number(index) < KNOB_COUNT) colors[Number(index)] = entry.rgb;
+  }
   writeColors(colors);
 }
 
@@ -94,4 +134,4 @@ function releaseKnob(knobIndex) {
   writeAll();
 }
 
-module.exports = { setKnobColor, releaseKnob, readRingColors, parseRingColors, buildPacket, hexToRgb };
+module.exports = { setKnobColor, releaseKnob, readRingColors, parseRingColors, buildPacket, hexToRgb, mergeShared, owned };

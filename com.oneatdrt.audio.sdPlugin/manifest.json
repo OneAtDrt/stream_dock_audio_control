@@ -51,7 +51,7 @@
   "Description": "Knobs for system volume + speaker/mic mute, and now-playing media control, with live status on the strip.",
   "Category": "Audio Control",
   "CategoryIcon": "static/icon.svg",
-  "Version": "0.2.0",
+  "Version": "0.2.1",
   "URL": "https://github.com/MiraboxSpace/StreamDock-Plugin-SDK",
   "OS": [
     {
